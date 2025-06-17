@@ -30,7 +30,12 @@ public class VideoEditorBot extends TelegramLongPollingBot {
     private final String userName = "video_ed_bot";
     private final String token = "7292771794:AAERcGR1HodjgV0kklZGwpwJEljpqWAsjGc";
 
-    private Map<Long, String> usersStatus = new HashMap<>();
+    private enum Status {
+        WAITING_COMMAND,
+        WAITING_CUT_TIME
+    }
+
+    private Map<Long, Status> usersStatus = new HashMap<>();
     private Map<Long, File> tempVideoFiles = new HashMap<>();
 
     /*
@@ -60,13 +65,13 @@ public class VideoEditorBot extends TelegramLongPollingBot {
         }
 
         // 3 случай: ожидаем от пользователя ввода времени для обрезки
-        if (usersStatus.getOrDefault(chatId, "").equals("WAITING_CUT_TIME")) {
+        if (usersStatus.getOrDefault(chatId, null).equals(Status.WAITING_CUT_TIME)) {
             executor.execute(() -> processCutTimeMessage(chatId, message));
             return;
         }
 
         // 4 случай: пользователь выбирает команду
-        if (usersStatus.getOrDefault(chatId, "").equals("WAITING_COMMAND")) {
+        if (usersStatus.getOrDefault(chatId, null).equals(Status.WAITING_COMMAND)) {
             switch (message) {
                 //Обрезка видео
                 case "/cut":
@@ -101,7 +106,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            usersStatus.put(chatId, "WAITING_COMMAND");
+            usersStatus.put(chatId, Status.WAITING_COMMAND);
             //Отправляем ему сообщение с выбором действий для видео
             sendCommandsText(chatId);
             // 2 случай: пользователь отправил файл иного формата
@@ -113,7 +118,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
 
     //Обработка команды "/cut"
     private void processCutCommand(Long chatId) {
-        usersStatus.put(chatId, "WAITING_CUT_TIME");
+        usersStatus.put(chatId, Status.WAITING_CUT_TIME);
         sendCutTimeMessage(chatId);
     }
 
@@ -140,7 +145,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             File videoFile = tempVideoFiles.remove(chatId);
             if (videoFile == null || !videoFile.exists()) {
                 sendVideoNotFoundText(chatId);
-                usersStatus.put(chatId, "");
+                usersStatus.put(chatId, null);
                 return;
             }
 
@@ -158,7 +163,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
         } catch (Exception e) {
             sendText(chatId, "Некорректный формат времени. Используйте MM:SS-MM:SS\nНапример: 00:05-01:15");
         } finally {
-            usersStatus.put(chatId, "");
+            usersStatus.put(chatId, null);
         }
     }
 
@@ -182,7 +187,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             File videoFile = tempVideoFiles.remove(chatId);
             if (videoFile == null || !videoFile.exists()) {
                 sendVideoNotFoundText(chatId);
-                usersStatus.put(chatId, "");
+                usersStatus.put(chatId, null);
                 return;
             }
 
@@ -191,7 +196,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             sendVideo(chatId, editedVideo);
             sendText(chatId, "Готово! Видео успешно перевёрнуто.");
             editedVideo.delete();
-            usersStatus.put(chatId, "");
+            usersStatus.put(chatId, null);
         } catch (Exception e) {
             sendVideoErrorText(chatId);
         }
@@ -203,7 +208,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             File videoFile = tempVideoFiles.remove(chatId);
             if (videoFile == null || !videoFile.exists()) {
                 sendVideoNotFoundText(chatId);
-                usersStatus.put(chatId, "");
+                usersStatus.put(chatId, null);
                 return;
             }
 
@@ -212,7 +217,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             sendVideo(chatId, editedVideo);
             sendText(chatId, "Готово! Ваше видео успешно отзеркалено.");
             editedVideo.delete();
-            usersStatus.put(chatId, "");
+            usersStatus.put(chatId, null);
         } catch (Exception e) {
             sendVideoErrorText(chatId);
         }
