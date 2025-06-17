@@ -1,5 +1,6 @@
 package bot;
 
+import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -149,6 +150,16 @@ public class VideoEditorBot extends TelegramLongPollingBot {
                 return;
             }
 
+            //Проверка, не выходит ли введенное время за пределы допустимого
+            int videoDuration = getVideoDuration(videoFile);
+            if (endSec > videoDuration) {
+                sendText(chatId, "Указанное время выходит за пределы видео. Длительность видео: " +
+                        secondsToTimeFormat(videoDuration) + ".\nПопробуйте ещё раз.");
+                // Возвращаем файл обратно в хранилище
+                tempVideoFiles.put(chatId, videoFile);
+                return;
+            }
+
             //Отправляем сообщение об обработке видео
             sendProcessingText(chatId);
             try {
@@ -162,8 +173,6 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             }
         } catch (Exception e) {
             sendText(chatId, "Некорректный формат времени. Используйте MM:SS-MM:SS\nНапример: 00:05-01:15");
-        } finally {
-            usersStatus.put(chatId, null);
         }
     }
 
@@ -179,6 +188,25 @@ public class VideoEditorBot extends TelegramLongPollingBot {
         int totalSeconds = minutes * 60 + seconds;
 
         return totalSeconds;
+    }
+
+    //Получение длительности видео в секундах
+    private int getVideoDuration(File videoFile) throws Exception {
+        try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(videoFile)) {
+            grabber.start();
+            //Длительность в микросекундах, переводим в секунды
+            long duration = grabber.getLengthInTime() / 1000000;
+            grabber.stop();
+
+            return (int) duration;
+        }
+    }
+
+    //Перевод секунд в формат MM:SS
+    private String secondsToTimeFormat(int totalSeconds) {
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return String.format("%02d:%02d", minutes, seconds);
     }
 
     //Обработка команды "/rotate"
