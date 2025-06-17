@@ -128,7 +128,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
         //Делим время на две части - начало промежутка и конец промежутка
         String[] parts = timeInput.split("-");
         if (parts.length != 2) {
-            sendText(chatId, "Некорректный формат времени. Используйте MM:SS-MM:SS\nНапример: 00:05-01:15");
+            sendText(chatId, "Некорректный формат времени. Используйте *MM:SS-MM:SS*\n\n_Например: 00:05-01:15_");
             return;
         }
 
@@ -138,7 +138,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             int endSec = changeTimeToSeconds(parts[1]);
 
             if (startSec >= endSec) {
-                sendText(chatId, "Конечное время должно быть больше начального! Попробуйте ещё раз.");
+                sendText(chatId, "Конечное время должно быть больше начального!\nПопробуйте ещё раз.");
                 return;
             }
 
@@ -153,7 +153,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
             //Проверка, не выходит ли введенное время за пределы допустимого
             int videoDuration = getVideoDuration(videoFile);
             if (endSec > videoDuration) {
-                sendText(chatId, "Указанное время выходит за пределы видео. Длительность видео: " +
+                sendText(chatId, "Указанное время выходит за пределы видео.\nДлительность видео: " +
                         secondsToTimeFormat(videoDuration) + ".\nПопробуйте ещё раз.");
                 // Возвращаем файл обратно в хранилище
                 tempVideoFiles.put(chatId, videoFile);
@@ -172,7 +172,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
                 sendVideoErrorText(chatId);
             }
         } catch (Exception e) {
-            sendText(chatId, "Некорректный формат времени. Используйте MM:SS-MM:SS\nНапример: 00:05-01:15");
+            sendText(chatId, "Некорректный формат времени. Используйте *MM:SS-MM:SS*\n\n_Например: 00:05-01:15_");
         }
     }
 
@@ -293,6 +293,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
         SendMessage messageToSend = new SendMessage();
         messageToSend.setChatId(chatId.toString());
         messageToSend.setText(text);
+        messageToSend.enableMarkdown(true);
 
         try {
             execute(messageToSend);
@@ -304,11 +305,11 @@ public class VideoEditorBot extends TelegramLongPollingBot {
     //Отправка сообщения с приветствием
     private void sendStartText(Long chatId) {
         String text = "Привет! С помощью этого бота ты можешь редактировать видео.\n" +
-                "Используй эти команды:\n" +
+                "*Используй эти команды*:\n" +
                 "/cut - обрезать видео\n" +
                 "/rotate - повернуть на 90°\n" +
                 "/mirror - зеркально отразить\n\n" +
-                "Отправь мне видео и затем выбери команду!";
+                "*Отправь мне видео и затем выбери команду!*";
 
         sendText(chatId, text);
     }
@@ -329,7 +330,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
 
     //Отправка сообщения о выборе действия
     private void sendCommandsText(Long chatId) {
-        String text = "Видео получено! Выбери действие:\n" +
+        String text = "Видео получено! *Выбери действие*:\n" +
                 "/cut - обрезать видео\n" +
                 "/rotate - повернуть на 90°\n" +
                 "/mirror - зеркально отразить";
@@ -339,8 +340,8 @@ public class VideoEditorBot extends TelegramLongPollingBot {
 
     //Отправка сообщения об указании времени обрезки
     private void sendCutTimeMessage(Long chatId) {
-        String text = "Укажи время желаемого начала видео в формате: MM:SS-MM:SS.\n" +
-                "Например: 00:05-01:15";
+        String text = "Укажи время желаемого начала видео в формате: *MM:SS-MM:SS*.\n\n" +
+                "_Например: 00:05-01:15_";
 
         sendText(chatId, text);
     }
@@ -361,7 +362,7 @@ public class VideoEditorBot extends TelegramLongPollingBot {
 
     //Отправка сообщения об обработке видео
     private void sendProcessingText(Long chatId) {
-        String text = "Обрабатываю видео...";
+        String text = "_Обрабатываю видео..._";
 
         sendText(chatId, text);
     }
