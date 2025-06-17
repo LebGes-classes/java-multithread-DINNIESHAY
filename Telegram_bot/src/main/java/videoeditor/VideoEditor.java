@@ -14,7 +14,7 @@ public class VideoEditor {
 
     //Обрезка видео
     public static File cutVideo(File input, int startSec, int endSec) throws Exception {
-        String outputPath = "cut_video.mp4";
+        String outputPath = "cut_video_" + System.currentTimeMillis() + ".mp4";
         //FFmpegFrameGrabber используется для чтения и декодирования видеофайлов, позволяет извлекать отдельные кадры
         try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(input)) {
             grabber.start();
@@ -28,6 +28,21 @@ public class VideoEditor {
                 recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264);
                 //Установка формата mp4
                 recorder.setFormat("mp4");
+                //Увеличиваем битрейт
+                recorder.setVideoBitrate(grabber.getVideoBitrate() * 2);
+                //Максимальное качество (0 - наилучшее, 51 - наихудшее)
+                recorder.setVideoQuality(0);
+                //Сохраняем исходный FPS
+                recorder.setFrameRate(grabber.getFrameRate());
+
+                //Настройка аудиопараметров, если в исходном видео есть аудио
+                if (grabber.getAudioChannels() > 0) {
+                    recorder.setAudioCodec(avcodec.AV_CODEC_ID_AAC);
+                    recorder.setAudioChannels(grabber.getAudioChannels());
+                    recorder.setAudioBitrate(grabber.getAudioBitrate());
+                    recorder.setSampleRate(grabber.getSampleRate());
+                }
+
                 recorder.start();
 
                 /*
@@ -42,10 +57,10 @@ public class VideoEditor {
                     //Захватываем очередной кадр
                     var frame = grabber.grab();
                     /*
-                      Выходим из цикла, если кадр пуст (видео закончилось) или время >= endTime
+                      Выходим из цикла, если кадр пуст (видео закончилось) или время > endTime
                       grabber.getTimestamp() возвращает текущую позицию в микросекундах, поэтому endSec преобразуем в микросекунды
                      */
-                    if (frame == null || grabber.getTimestamp() >= endSec * 1_000_000L) {
+                    if (frame == null || grabber.getTimestamp() > endSec * 1_000_000L) {
                         break;
                     }
 
@@ -60,17 +75,32 @@ public class VideoEditor {
 
     //Поворот видео на 90°
     public static File rotateVideo(File input) throws Exception {
-        String outputPath = "rotated_video.mp4";
+        String outputPath = "rotated_video_" + System.currentTimeMillis() + ".mp4";
         //FFmpegFrameGrabber используется для чтения и декодирования видеофайлов, позволяет извлекать отдельные кадры
         try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(input)) {
             grabber.start();
 
             //FFmpegFrameRecorder позволяет кодировать и записывать кадры в новые видеофайлы
             try (FFmpegFrameRecorder recorder = new FFmpegFrameRecorder(outputPath, grabber.getImageHeight(), grabber.getImageWidth())) {
-                // Установка видеокодека H.264
+                //Установка видеокодека H.264
                 recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264);
                 //Установка формата mp4
                 recorder.setFormat("mp4");
+                //Увеличиваем битрейт
+                recorder.setVideoBitrate(grabber.getVideoBitrate() * 2);
+                //Максимальное качество (0 - наилучшее, 51 - наихудшее)
+                recorder.setVideoQuality(0);
+                //Сохраняем исходный FPS
+                recorder.setFrameRate(grabber.getFrameRate());
+
+                //Настройка аудиопараметров, если в исходном видео есть аудио
+                if (grabber.getAudioChannels() > 0) {
+                    recorder.setAudioCodec(avcodec.AV_CODEC_ID_AAC);
+                    recorder.setAudioChannels(grabber.getAudioChannels());
+                    recorder.setAudioBitrate(grabber.getAudioBitrate());
+                    recorder.setSampleRate(grabber.getSampleRate());
+                }
+
                 recorder.start();
 
                 /*
@@ -93,6 +123,10 @@ public class VideoEditor {
                         BufferedImage rotated = rotateImage(image);
                         recorder.record(converter.convert(rotated));
                     }
+                    //Обрабатываем аудиофрейм
+                    if (frame.samples != null) {
+                        recorder.record(frame);
+                    }
                 }
             }
         }
@@ -101,23 +135,38 @@ public class VideoEditor {
     }
 
     public static File mirrorVideo(File input) throws Exception {
-        String outputPath = "mirrored_video.mp4";
+        String outputPath = "mirrored_video_" + System.currentTimeMillis() + ".mp4";
         //FFmpegFrameGrabber используется для чтения и декодирования видеофайлов, позволяет извлекать отдельные кадры
         try (FFmpegFrameGrabber grabber = new FFmpegFrameGrabber(input)) {
             grabber.start();
 
             //FFmpegFrameRecorder позволяет кодировать и записывать кадры в новые видеофайлы
             try (FFmpegFrameRecorder recorder = new FFmpegFrameRecorder(outputPath, grabber.getImageWidth(), grabber.getImageHeight())) {
-                // Установка видеокодека H.264
+                //Установка видеокодека H.264
                 recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264);
                 //Установка формата mp4
                 recorder.setFormat("mp4");
+                //Увеличиваем битрейт
+                recorder.setVideoBitrate(grabber.getVideoBitrate() * 2);
+                //Максимальное качество (0 - наилучшее, 51 - наихудшее)
+                recorder.setVideoQuality(0);
+                //Сохраняем исходный FPS
+                recorder.setFrameRate(grabber.getFrameRate());
+
+                //Настройка аудиопараметров, если в исходном видео есть аудио
+                if (grabber.getAudioChannels() > 0) {
+                    recorder.setAudioCodec(avcodec.AV_CODEC_ID_AAC);
+                    recorder.setAudioChannels(grabber.getAudioChannels());
+                    recorder.setAudioBitrate(grabber.getAudioBitrate());
+                    recorder.setSampleRate(grabber.getSampleRate());
+                }
+
                 recorder.start();
 
                 /*
                   Java2DFrameConverter преобразует кадры (Frame из OpenCV/FFmpeg) в объекты Java2D (BufferedImage) и обратно.
                   Это позволяет накладывать графику, текст, фильтры на видео и т.п.
-                 */
+                */
                 Java2DFrameConverter converter = new Java2DFrameConverter();
                 while (true) {
                     //Захватываем очередной кадр
@@ -127,11 +176,15 @@ public class VideoEditor {
                         break;
                     }
 
-                    // Зеркально отражаем кадр
+                    //Зеркально отражаем кадр
                     BufferedImage image = converter.convert(frame);
                     if (image != null) {
                         BufferedImage mirrored = mirrorImage(image);
                         recorder.record(converter.convert(mirrored));
+                    }
+                    //Обрабатываем аудиофрейм
+                    if (frame.samples != null) {
+                        recorder.record(frame);
                     }
                 }
             }
@@ -161,17 +214,18 @@ public class VideoEditor {
     }
 
     private static BufferedImage mirrorImage(BufferedImage image) {
-        //Аффинное преобразование
-        AffineTransform transform = new AffineTransform(-1, 0, 0, 1, image.getWidth(), 0);
-
-        //Создаем пустое изображение с такими же свойствами
+        //Создаем пустое изображение с такими же размерами и свойствами
         BufferedImage mirrored = new BufferedImage(image.getWidth(), image.getHeight(), image.getType());
 
-        //Рисуем исходное изображение
+        //Применяем зеркальное отражение по горизонтали
         Graphics2D graphics = mirrored.createGraphics();
-        graphics.transform(transform);
-        graphics.drawImage(image, 0, 0, null);
-        //Освобождаем ресурсов
+        graphics.drawImage(
+                image,
+                image.getWidth(), 0,
+                -image.getWidth(), image.getHeight(),
+                null
+        );
+        //Освобождаем ресурсы
         graphics.dispose();
 
         return mirrored;
